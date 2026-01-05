@@ -61,7 +61,7 @@ stages:
             inputs:
               script: |
                 git clone https://$(GIT_USERNAME):$(GIT_PASSWORD)@github.com/singhritesh85/DevOps-Project-Docker-the-Serverless-way.git
-                cd opentofu-azure-container-app-appgtw-bankapp-mysql-flexible-servers/main
+                cd DevOps-Project-Docker-the-Serverless-way/opentofu-azure-container-app-appgtw-bankapp-mysql-flexible-servers/main
                 tofu init
                 tofu plan -var certificate_password=$(certificate_password) -var SERVER_ACR=$(SERVER_ACR) -var REPO_NAME="samplewebapp" -var TAG_NUMBER=$(Build.BuildId)
                 tofu apply -auto-approve -var certificate_password=$(certificate_password) -var SERVER_ACR=$(SERVER_ACR) -var REPO_NAME="samplewebapp" -var TAG_NUMBER=$(Build.BuildId) 
