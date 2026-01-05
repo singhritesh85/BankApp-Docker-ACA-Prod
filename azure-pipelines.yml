@@ -1,0 +1,68 @@
+trigger:
+- main
+
+pr: none
+pool:
+  name: demo
+  demands:
+  - agent.name -equals demo
+
+stages:
+- stage: "Build"
+  displayName: Build
+  jobs:
+  - job: "Build"
+    displayName: Build
+    steps:
+    - task: Maven@4
+      inputs:
+        mavenPomFile: 'pom.xml'
+        goals: 'clean install'
+        publishJUnitResults: false
+        javaHomeOption: 'JDKVersion'
+        mavenVersionOption: 'Default'
+        mavenAuthenticateFeed: false
+        effectivePomSkip: false
+        sonarQubeRunAnalysis: false
+- stage: DockerImageBuild
+  displayName: DockerImageBuild
+  dependsOn: "Build"
+  jobs:
+  - job: DockerImageBuild
+    displayName: DockerImageBuild
+    steps:
+    - checkout: none
+    - task: CmdLine@2
+      inputs:
+        script: |
+          docker system prune -f --all
+          docker build -t devopsagentcontainer24registry.azurecr.io/samplewebapp:$(Build.BuildId) -f Dockerfile-Project-1 .
+          trivy image --exit-code 0 --severity MEDIUM,HIGH devopsagentcontainer24registry.azurecr.io/samplewebapp:$(Build.BuildId)
+          #trivy image --exit-code 1 --severity CRITICAL devopsagentcontainer24registry.azurecr.io/samplewebapp:$(Build.BuildId)
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'Docker-Registry'
+        repository: 'samplewebapp'
+        command: 'buildAndPush'
+        Dockerfile: '**/Dockerfile-Project-1'
+- stage: AzureContainerAppDeploymentusingTerraform
+  displayName: AzureContainerAppDeploymentusingTerraform
+  dependsOn: DockerImageBuild
+  jobs:
+  - deployment: AzureContainerAppDeploymentusingTerraform
+    displayName: AzureContainerAppDeploymentusingTerraform
+    environment: "dev"
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: none
+          - task: CmdLine@2
+            inputs:
+              script: |
+                git clone https://$(GIT_USERNAME):$(GIT_PASSWORD)@github.com/singhritesh85/terraform-docker-aca-the-serverless-way.git
+                cd terraform-docker-aca-the-serverless-way/terraform-azure-container-app-ingress-bankapp-mysql/main
+                terraform init
+                terraform plan -var SERVER_ACR=$(SERVER_ACR) -var USERNAME_ACR=$(USERNAME_ACR) -var PASSWORD_ACR=$(PASSWORD_ACR) -var REPO_NAME="samplewebapp" -var TAG_NUMBER=$(Build.BuildId)
+                terraform apply -auto-approve -var SERVER_ACR=$(SERVER_ACR) -var USERNAME_ACR=$(USERNAME_ACR) -var PASSWORD_ACR=$(PASSWORD_ACR) -var REPO_NAME="samplewebapp" -var TAG_NUMBER=$(Build.BuildId) 
+      
