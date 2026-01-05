@@ -51,7 +51,7 @@ stages:
   jobs:
   - deployment: AzureContainerAppDeploymentusingTerraform
     displayName: AzureContainerAppDeploymentusingTerraform
-    environment: "dev"
+    environment: "prod"
     strategy:
       runOnce:
         deploy:
@@ -60,9 +60,9 @@ stages:
           - task: CmdLine@2
             inputs:
               script: |
-                git clone https://$(GIT_USERNAME):$(GIT_PASSWORD)@github.com/singhritesh85/terraform-docker-aca-the-serverless-way.git
-                cd terraform-docker-aca-the-serverless-way/terraform-azure-container-app-ingress-bankapp-mysql/main
-                terraform init
-                terraform plan -var SERVER_ACR=$(SERVER_ACR) -var USERNAME_ACR=$(USERNAME_ACR) -var PASSWORD_ACR=$(PASSWORD_ACR) -var REPO_NAME="samplewebapp" -var TAG_NUMBER=$(Build.BuildId)
-                terraform apply -auto-approve -var SERVER_ACR=$(SERVER_ACR) -var USERNAME_ACR=$(USERNAME_ACR) -var PASSWORD_ACR=$(PASSWORD_ACR) -var REPO_NAME="samplewebapp" -var TAG_NUMBER=$(Build.BuildId) 
+                git clone https://$(GIT_USERNAME):$(GIT_PASSWORD)@github.com/singhritesh85/DevOps-Project-Docker-the-Serverless-way.git
+                cd opentofu-azure-container-app-appgtw-bankapp-mysql-flexible-servers/main
+                tofu init
+                tofu plan -var certificate_password=$(certificate_password) -var SERVER_ACR=$(SERVER_ACR) -var REPO_NAME="samplewebapp" -var TAG_NUMBER=$(Build.BuildId)
+                tofu apply -auto-approve -var certificate_password=$(certificate_password) -var SERVER_ACR=$(SERVER_ACR) -var REPO_NAME="samplewebapp" -var TAG_NUMBER=$(Build.BuildId) 
       
